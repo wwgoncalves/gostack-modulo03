@@ -1,9 +1,11 @@
 import * as Yup from "yup";
-import { startOfHour, parseISO, isBefore } from "date-fns";
+import { startOfHour, parseISO, isBefore, format } from "date-fns";
+import enUS from "date-fns/locale/en-US";
 
 import Appointment from "../models/Appointment";
 import User from "../models/User";
 import File from "../models/File";
+import Notification from "../schemas/Notification";
 
 class AppointmentController {
   async index(request, response) {
@@ -53,6 +55,12 @@ class AppointmentController {
 
       const { provider_id, date } = request.body;
 
+      if (provider_id === request.userId) {
+        return response
+          .status(400)
+          .json({ error: "Consumer and provider must be different users." });
+      }
+
       /**
        * Check if provider_id is a provider
        */
@@ -99,6 +107,21 @@ class AppointmentController {
         user_id: request.userId,
         provider_id,
         date,
+      });
+
+      /**
+       * Notify appointment to provider
+       */
+      const user = await User.findByPk(request.userId);
+      const formattedDate = format(
+        hourStart,
+        "'on' iiii',' MMMM dd 'at' H:mm '('zzzz')'",
+        { locale: enUS }
+      );
+
+      await Notification.create({
+        content: `New appointment from ${user.name} ${formattedDate}.`,
+        user: provider_id,
       });
 
       return response.status(201).json(appointment);
