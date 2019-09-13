@@ -118,7 +118,7 @@ class AppointmentController {
       const user = await User.findByPk(request.userId);
       const formattedDate = format(
         hourStart,
-        "'on' iiii',' MMMM dd 'at' H:mm '('zzzz')'",
+        "'on' iiii',' MMMM dd 'at' HH:mm '('zzzz')'",
         { locale: enUS }
       );
 
